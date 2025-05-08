@@ -138,6 +138,7 @@ await new Promise<void>((resolve) =>
   httpServer.listen({ port: 4000 }, resolve)
 );
 console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+console.log(`🚀 Server ready at ws://localhost:4000/graphql`);
 
 // Publish notifications every 5 seconds
 setInterval(() => {

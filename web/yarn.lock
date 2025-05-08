@@ -15,7 +15,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.6.9":
+"@apollo/client@npm:^3.13.8":
   version: 3.13.8
   resolution: "@apollo/client@npm:3.13.8"
   dependencies:
@@ -1571,7 +1571,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-spa@workspace:."
   dependencies:
-    "@apollo/client": "npm:^3.6.9"
+    "@apollo/client": "npm:^3.13.8"
     "@types/react": "npm:^18.0.15"
     "@types/react-dom": "npm:^18.0.6"
     "@vitejs/plugin-react": "npm:^2.0.0"

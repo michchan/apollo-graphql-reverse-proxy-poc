@@ -16,7 +16,7 @@ FROM nginx:alpine AS nginx-builder
 COPY --from=web-builder /app/dist /usr/share/nginx/html
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
-COPY nginx/scripts.js /usr/local/njs/scripts.js
+COPY nginx/scripts.js /etc/nginx/njs/scripts.js
 
 CMD ["nginx", "-g", "daemon off;"]
 
