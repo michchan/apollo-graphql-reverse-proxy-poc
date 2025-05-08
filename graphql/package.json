@@ -1,5 +1,5 @@
 {
-  "name": "gql-server",
+  "name": "graphql",
   "version": "1.0.0",
   "main": "dist/index.js",
   "packageManager": "yarn@4.5.1",

@@ -22,7 +22,7 @@ function forwardRefreshTokenToServer(r) {
     body = JSON.parse(r.requestText);
   } catch (e) {
     r.warn("Failed to parse request body");
-    r.proxyPass("http://gql-server:4000/graphql");
+    r.proxyPass("http://graphql:4000/graphql");
     return;
   }
 
@@ -32,7 +32,7 @@ function forwardRefreshTokenToServer(r) {
     r.requestBody = JSON.stringify(body);
   }
 
-  r.proxyPass("http://gql-server:4000/graphql");
+  r.proxyPass("http://graphql:4000/graphql");
 }
 
 export default {
