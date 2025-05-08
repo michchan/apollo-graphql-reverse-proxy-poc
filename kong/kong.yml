@@ -1,0 +1,22 @@
+_format_version: "3.0"
+services:
+  - name: graphql-service
+    url: http://gql-server:4000/graphql
+    routes:
+      - name: graphql-route
+        paths:
+          - /graphql
+        plugins:
+          - name: refresh-token-plugin
+  - name: spa-service
+    url: http://client:80
+    routes:
+      - name: spa-route
+        paths:
+          - /
+plugins:
+  - name: refresh-token-plugin
+    config:
+      set_cookie_header: X-Set-Refresh-Token
+      extract_cookie_name: refreshToken
+      mutation_name: refreshToken

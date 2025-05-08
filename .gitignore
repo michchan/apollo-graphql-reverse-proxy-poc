@@ -1,0 +1,18 @@
+# Node modules
+node_modules/
+
+# Yarn Berry artifacts (exclude cache, include releases)
+.yarn/cache/
+!.yarn/releases/
+.yarn/plugins/
+.yarn/sdks/
+
+# Build outputs
+server/dist/
+client/dist/
+
+# Docker artifacts
+*.log
+
+# Environment files
+.env

@@ -1,0 +1,25 @@
+{
+  "name": "react-spa",
+  "version": "1.0.0",
+  "packageManager": "yarn@4.5.1",
+  "scripts": {
+    "dev": "yarn vite",
+    "build": "yarn vite build",
+    "serve": "yarn vite preview"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.6.9",
+    "graphql": "^16.5.0",
+    "graphql-ws": "^5.9.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "subscriptions-transport-ws": "^0.11.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.15",
+    "@types/react-dom": "^18.0.6",
+    "@vitejs/plugin-react": "^2.0.0",
+    "typescript": "^4.7.4",
+    "vite": "^3.0.0"
+  }
+}
