@@ -8,8 +8,8 @@ node_modules/
 .yarn/sdks/
 
 # Build outputs
-server/dist/
-client/dist/
+graphql/dist/
+web/dist/
 
 # Docker artifacts
 *.log

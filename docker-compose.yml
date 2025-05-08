@@ -1,32 +1,27 @@
 version: "3.8"
+
 services:
-  gql-server:
-    build: ./server
+  graphql:
+    build:
+      context: ./graphql
+      dockerfile: Dockerfile
     ports:
       - "4000:4000"
+    environment:
+      - REVERSE_PROXY_TYPE=${REVERSE_PROXY_TYPE:-nginx}
 
-  client:
-    build: ./client
-    ports:
-      - "8080:80"
-
-  nginx:
-    build: ./nginx
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      target: ${REVERSE_PROXY_TYPE:-nginx}-builder
     ports:
       - "80:80"
     depends_on:
-      - gql-server
-      - client
+      - graphql
     profiles:
       - nginx
-
-  kong:
-    build: ./kong
-    ports:
-      - "80:8000"
-      - "8443:8443"
-    depends_on:
-      - gql-server
-      - client
-    profiles:
       - kong
+
+volumes:
+  kong_data:

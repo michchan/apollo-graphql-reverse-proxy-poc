@@ -1,4 +1,4 @@
-function setRefreshTokenCookie(r) {
+function forwardRefreshTokenToClient(r) {
   if (r.headersOut["X-Set-Refresh-Token"]) {
     r.headersOut[
       "Set-Cookie"
@@ -7,7 +7,7 @@ function setRefreshTokenCookie(r) {
   }
 }
 
-function modifyRequestBody(r) {
+function forwardRefreshTokenToServer(r) {
   let refreshToken = "";
   const cookie = r.headersIn["Cookie"];
   if (cookie) {
@@ -34,3 +34,8 @@ function modifyRequestBody(r) {
 
   r.proxyPass("http://gql-server:4000/graphql");
 }
+
+export default {
+  forwardRefreshTokenToClient,
+  forwardRefreshTokenToServer,
+};
