@@ -147,10 +147,3 @@ await new Promise<void>((resolve) =>
 );
 console.log(`🚀 Server ready at http://localhost:4000/graphql`);
 console.log(`🚀 Server ready at ws://localhost:4000/graphql`);
-
-// Publish notification every 5 seconds
-setInterval(() => {
-  pubsub.publish("NOTIFICATION", {
-    notification: { message: "New notification!" },
-  });
-}, 5000);
