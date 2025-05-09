@@ -1,76 +1,58 @@
-function forwardRefreshTokenToClient(r) {
-  // Hardcoded list of mutations that return refreshToken
-  const mutationsWithRefreshToken = ["login", "refreshToken"];
-
-  // Skip if no response body or not a mutation response
-  if (!r.responseBody) {
-    r.warn("No response body available, skipping cookie processing");
-    return;
-  }
-
-  let responseBody;
+function setRefreshTokenInResponseHeader(r) {
   try {
-    responseBody = JSON.parse(r.responseBody);
-  } catch (e) {
-    r.warn("Failed to parse response body: " + e);
-    return;
-  }
+    // Check if the backend returned a refresh token in the headers
+    const refreshToken = r.headersOut["X-Refresh-Token"];
+    r.log("🚀 ~ setRefreshTokenInResponseHeader ~ r.headersOut:", r.headersOut);
+    r.log("🚀 ~ setRefreshTokenInResponseHeader ~ refreshToken:", refreshToken);
 
-  // Skip if no data or not a mutation result
-  if (!responseBody.data || typeof responseBody.data !== "object") {
-    r.warn("Response body does not contain valid data object");
-    return;
-  }
+    if (refreshToken) {
+      // Uncomment the following line with HTTPS:
+      // r.headersOut['Set-Cookie'] = `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Strict`;
+      r.headersOut[
+        "Set-Cookie"
+      ] = `refreshToken=${refreshToken}; HttpOnly; SameSite=Strict`;
 
-  // Check if the response is from a mutation with refreshToken
-  mutationsWithRefreshToken.forEach(function (mutation) {
-    if (
-      r.variables &&
-      r.variables.operationName === mutation &&
-      responseBody.data[mutation]
-    ) {
-      const refreshToken = responseBody.data[mutation].refreshToken;
-      if (refreshToken) {
-        r.headersOut[
-          "Set-Cookie"
-        ] = `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Strict`;
-      }
+      r.headersOut["X-Refresh-Token"] = "";
+      r.log(
+        "🚀 ~ setRefreshTokenInResponseHeader ~ r.headersOut:",
+        r.headersOut
+      );
     }
-  });
+  } catch (e) {
+    r.log(`Error in setRefreshTokenInResponseHeader: ${e.message}`, e);
+  }
 }
 
-function forwardRefreshTokenToServer(r) {
-  // Skip GET requests or requests without a body
-  if (r.method === "GET" || !r.requestText) {
-    r.warn("Skipping request processing for GET or no body");
-    return;
-  }
+const RESOURCE_NAMES_WITH_REFRESH_TOKEN = ["login", "refreshSession"];
 
-  let refreshToken = "";
-  const cookie = r.headersIn["Cookie"];
-  if (cookie) {
-    const match = cookie.match(/refreshToken=([^;]+)/);
-    if (match) {
-      refreshToken = match[1];
-    }
-  }
-
-  let body;
+function stripRefreshTokenInResponseBody(r, data, flags) {
   try {
-    body = JSON.parse(r.requestText);
-  } catch (e) {
-    r.warn("Failed to parse request body: " + e);
-    return;
-  }
+    let responseBody = data.trim() ? JSON.parse(data) : {};
+    let modifiedBody = responseBody;
 
-  if (body.query && body.query.includes("mutation refreshToken")) {
-    body.variables = body.variables || {};
-    body.variables.refreshToken = refreshToken;
-    r.requestBody = JSON.stringify(body);
+    RESOURCE_NAMES_WITH_REFRESH_TOKEN.forEach((resourceName) => {
+      if (
+        responseBody &&
+        typeof responseBody === "object" &&
+        responseBody.data &&
+        responseBody.data[resourceName]
+      ) {
+        const refreshToken = responseBody.data[resourceName].refreshToken;
+        if (refreshToken) {
+          modifiedBody = Object.assign(responseBody.data[resourceName], {
+            refreshToken: "",
+          });
+        }
+      }
+    });
+
+    r.sendBuffer(JSON.stringify(modifiedBody), flags);
+  } catch (e) {
+    r.log(`Error in stripRefreshTokenInResponseBody: ${e.message}`, e);
   }
 }
 
 export default {
-  forwardRefreshTokenToClient,
-  forwardRefreshTokenToServer,
+  setRefreshTokenInResponseHeader,
+  stripRefreshTokenInResponseBody,
 };

@@ -1,4 +1,8 @@
-import { ApolloServer } from "@apollo/server";
+import {
+  ApolloServer,
+  ApolloServerPlugin,
+  GraphQLRequestContextWillSendResponse,
+} from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import express from "express";
@@ -32,7 +36,7 @@ const typeDefs = `#graphql
 
   type Mutation {
     login(username: String!, password: String!): AuthPayload!
-    refreshToken(refreshToken: String!): AuthPayload!
+    refreshSession(refreshToken: String!): AuthPayload!
   }
 
   type Notification {
@@ -67,7 +71,7 @@ const resolvers = {
       }
       throw new Error("Invalid credentials");
     },
-    refreshToken: (_: unknown, { refreshToken }: RefreshTokenArgs) => {
+    refreshSession: (_: unknown, { refreshToken }: RefreshTokenArgs) => {
       if (refreshToken === "refresh-token-123") {
         return {
           accessToken: "new-access-token-456",
@@ -87,6 +91,41 @@ const resolvers = {
   },
 };
 
+const RESOURCE_NAMES_WITH_REFRESH_TOKEN = ["login", "refreshSession"];
+
+const refreshTokenPlugin: ApolloServerPlugin = {
+  async requestDidStart() {
+    return {
+      async willSendResponse(
+        context: GraphQLRequestContextWillSendResponse<any>
+      ) {
+        const { response } = context;
+
+        const result =
+          "singleResult" in response.body && response.body.singleResult;
+
+        const matchedResourceName =
+          result &&
+          result.data &&
+          RESOURCE_NAMES_WITH_REFRESH_TOKEN.find(
+            (resourceName) => resourceName in (result.data ?? {})
+          );
+
+        if (
+          matchedResourceName &&
+          result &&
+          result.data &&
+          result.data[matchedResourceName]
+        ) {
+          const refreshToken = (result.data[matchedResourceName] as any)
+            .refreshToken;
+          // Set refresh token in the headers
+          response.http?.headers.set("X-Refresh-Token", refreshToken);
+        }
+      },
+    };
+  },
+};
 // Create executable schema
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -127,7 +166,10 @@ useServer(
 // Create Apollo Server
 const server = new ApolloServer({
   schema,
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    refreshTokenPlugin,
+  ],
 });
 
 // Start the server

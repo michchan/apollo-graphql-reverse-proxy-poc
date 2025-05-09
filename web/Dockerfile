@@ -11,14 +11,13 @@ COPY . .
 RUN yarn build
 
 # Build Nginx reverse proxy
-FROM nginx:alpine AS nginx-builder
+FROM nginx:1.28.0-alpine AS nginx-builder
 
 COPY --from=web-builder /app/dist /usr/share/nginx/html
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/scripts.js /etc/nginx/njs/scripts.js
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["sh", "-c", "nginx -v; nginx -g 'daemon off;'"]
 
 # Build Kong reverse proxy
 FROM kong:3.0.0 AS kong-builder

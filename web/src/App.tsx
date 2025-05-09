@@ -18,8 +18,11 @@ const LOGIN_MUTATION = gql`
 `;
 
 const REFRESH_TOKEN_MUTATION = gql`
-  mutation RefreshToken($refreshToken: String!) {
-    refreshToken(refreshToken: $refreshToken)
+  mutation RefreshSession($refreshToken: String!) {
+    refreshSession(refreshToken: $refreshToken) {
+      accessToken
+      refreshToken
+    }
   }
 `;
 
@@ -38,7 +41,7 @@ function App() {
 
   const { data: queryData } = useQuery(HELLO_QUERY);
   const [login] = useMutation(LOGIN_MUTATION);
-  const [refreshToken] = useMutation(REFRESH_TOKEN_MUTATION);
+  const [refreshSession] = useMutation(REFRESH_TOKEN_MUTATION);
   const { data: subData } = useSubscription(NOTIFICATIONS_SUBSCRIPTION);
 
   // Add new notifications to the array when received
@@ -60,7 +63,7 @@ function App() {
   const handleRefresh = async () => {
     try {
       // Note: The refreshToken variable is injected by the proxy
-      const result = await refreshToken({ variables: { refreshToken: "" } });
+      const result = await refreshSession({ variables: { refreshToken: "" } });
       console.log("Token refreshed:", result.data);
     } catch (e) {
       console.error("Refresh failed:", e);
