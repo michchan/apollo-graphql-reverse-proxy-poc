@@ -105,7 +105,7 @@ This Proof-of-Concept (POC) implements a reverse proxy setup using either Nginx 
    - **Query**: Displays "Hello from GraphQL!" on load.
    - **Mutation (Login)**: Sets the `refreshToken` cookie.
    - **Mutation (Refresh)**: Uses the cookie’s token in the request body to get a new access token.
-   - **Subscription**: Notifications update every 5 seconds.
+   - **Subscription**: Notification update every 5 seconds.
 
 ## Switching Proxies
 

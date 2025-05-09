@@ -14,23 +14,27 @@ import { getMainDefinition } from "@apollo/client/utilities";
 
 const httpLink = new HttpLink({
   // This is setup for sitting behind a reverse proxy (Nginx/Kong) with the same domain. Use absolute URL for local development.
-  // uri: "http://localhost:4000/graphql"
-  uri: "/graphql",
+  uri: "http://localhost:4000/graphql",
+  // uri: "/graphql",
 });
 
 const wsLink = new GraphQLWsLink(
   createClient({
     // This is setup for sitting behind a reverse proxy (Nginx/Kong) with the same domain. Use absolute URL for local development.
-    // url: "ws://localhost:4000/graphql"
-    url: "/graphql",
+    url: "ws://localhost:4000/graphql",
+    // url: "/graphql",
+    retryAttempts: 5,
+    shouldRetry: () => true,
+    lazyCloseTimeout: 5000,
     connectionParams: {
       // Optional: Add authentication headers if needed
       authToken: "your-auth-token",
     },
     on: {
-      connected: () => console.log("WebSocket connected!"),
-      closed: () => console.log("WebSocket disconnected!"),
+      connected: (event) => console.log("WebSocket connected!", event),
+      closed: (event) => console.log("WebSocket disconnected!", event),
       error: (err) => console.error("WebSocket error:", err),
+      message: (msg) => console.log("WebSocket message received:", msg),
     },
   })
 );

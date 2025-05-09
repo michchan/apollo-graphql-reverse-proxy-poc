@@ -8,10 +8,6 @@ import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { PubSub } from "graphql-subscriptions";
-import type {
-  ApolloServerPlugin,
-  GraphQLRequestContextWillSendResponse,
-} from "@apollo/server";
 
 // Define interfaces for resolver arguments
 interface LoginArgs {
@@ -25,13 +21,18 @@ interface RefreshTokenArgs {
 
 // Define GraphQL type definitions
 const typeDefs = `#graphql
+  type AuthPayload {
+    accessToken: String!
+    refreshToken: String!
+  }
+
   type Query {
     hello: String!
   }
 
   type Mutation {
-    login(username: String!, password: String!): String
-    refreshToken(refreshToken: String!): String
+    login(username: String!, password: String!): AuthPayload!
+    refreshToken(refreshToken: String!): AuthPayload!
   }
 
   type Notification {
@@ -54,49 +55,38 @@ const resolvers = {
   Mutation: {
     login: (_: unknown, { username, password }: LoginArgs) => {
       if (username === "user" && password === "pass") {
-        return "access-token-123";
+        const result = {
+          accessToken: "access-token-123",
+          refreshToken: "refresh-token-123",
+        };
+        // Publish a notification when login is successful
+        pubsub.publish("NOTIFICATION", {
+          notification: { message: `User ${username} has logged in!` },
+        });
+        return result;
       }
       throw new Error("Invalid credentials");
     },
     refreshToken: (_: unknown, { refreshToken }: RefreshTokenArgs) => {
       if (refreshToken === "refresh-token-123") {
-        return "new-access-token-456";
+        return {
+          accessToken: "new-access-token-456",
+          refreshToken: "new-refresh-token-789",
+        };
       }
       throw new Error("Invalid refresh token");
     },
   },
   Subscription: {
     notification: {
-      subscribe: () => pubsub.asyncIterator(["NOTIFICATION"]),
+      subscribe: () => {
+        console.log("🚀 ~ subscribe");
+        return pubsub.asyncIterator(["NOTIFICATION"]);
+      },
     },
   },
 };
 
-// Create a custom Apollo Server plugin to set the refresh token cookie
-const refreshTokenPlugin: ApolloServerPlugin = {
-  async requestDidStart() {
-    return {
-      async willSendResponse(
-        context: GraphQLRequestContextWillSendResponse<any>
-      ) {
-        const { response, operationName } = context;
-
-        const result =
-          "singleResult" in response.body && response.body.singleResult;
-
-        if (operationName === "login" && result && result.data?.login) {
-          const refreshToken = "refresh-token-123";
-
-          // Set refresh token in the headers
-          response.http?.headers.set(
-            "Set-Cookie",
-            `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Strict`
-          );
-        }
-      },
-    };
-  },
-};
 // Create executable schema
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -111,15 +101,33 @@ const wsServer = new WebSocketServer({
 });
 
 // Use WebSocket server with GraphQL schema
-useServer({ schema }, wsServer);
+useServer(
+  {
+    schema,
+    onConnect: async (ctx) => {
+      console.log(
+        "🚀 ~ onConnect: ~ ctx.connectionParams:",
+        JSON.stringify(ctx.connectionParams, null, 2)
+      );
+    },
+    onDisconnect: (ctx, code, reason) => {
+      console.log("Disconnected!", {
+        connectionParams: ctx.connectionParams,
+        code,
+        reason,
+      });
+    },
+    onSubscribe: (ctx, msg) => {
+      console.log("Client subscribed, message:", msg);
+    },
+  },
+  wsServer
+);
 
 // Create Apollo Server
 const server = new ApolloServer({
   schema,
-  plugins: [
-    ApolloServerPluginDrainHttpServer({ httpServer }),
-    refreshTokenPlugin,
-  ],
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
 // Start the server
@@ -140,7 +148,7 @@ await new Promise<void>((resolve) =>
 console.log(`🚀 Server ready at http://localhost:4000/graphql`);
 console.log(`🚀 Server ready at ws://localhost:4000/graphql`);
 
-// Publish notifications every 5 seconds
+// Publish notification every 5 seconds
 setInterval(() => {
   pubsub.publish("NOTIFICATION", {
     notification: { message: "New notification!" },

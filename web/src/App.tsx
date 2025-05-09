@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useSubscription } from "@apollo/client";
 import { gql } from "@apollo/client";
 
@@ -24,19 +24,29 @@ const REFRESH_TOKEN_MUTATION = gql`
 `;
 
 const NOTIFICATIONS_SUBSCRIPTION = gql`
-  subscription Notifications {
-    notifications
+  subscription OnNotification {
+    notification {
+      message
+    }
   }
 `;
 
 function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [notifications, setNotifications] = useState<string[]>([]);
 
   const { data: queryData } = useQuery(HELLO_QUERY);
   const [login] = useMutation(LOGIN_MUTATION);
   const [refreshToken] = useMutation(REFRESH_TOKEN_MUTATION);
   const { data: subData } = useSubscription(NOTIFICATIONS_SUBSCRIPTION);
+
+  // Add new notifications to the array when received
+  useEffect(() => {
+    if (subData?.notification?.message) {
+      setNotifications((prev) => [...prev, subData.notification.message]);
+    }
+  }, [subData]);
 
   const handleLogin = async () => {
     try {
@@ -96,8 +106,18 @@ function App() {
       </div>
 
       <div>
-        <h2>Subscription</h2>
-        <p>{subData?.notifications || "Waiting for notifications..."}</p>
+        <h2>Notifications</h2>
+        {notifications.length === 0 ? (
+          <p>Waiting for notifications...</p>
+        ) : (
+          <ul className="list-disc pl-5">
+            {notifications.map((notification, index) => (
+              <li key={index} className="mb-1">
+                {notification}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
