@@ -170,6 +170,7 @@ const server = new ApolloServer({
     ApolloServerPluginDrainHttpServer({ httpServer }),
     refreshTokenPlugin,
   ],
+  status400ForVariableCoercionErrors: true,
 });
 
 // Start the server
