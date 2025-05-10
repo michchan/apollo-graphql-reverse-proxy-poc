@@ -1,11 +1,7 @@
-import {
-  ApolloServer,
-  ApolloServerPlugin,
-  GraphQLRequestContextWillSendResponse,
-} from "@apollo/server";
+import { ApolloServer, ApolloServerPlugin, BaseContext } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
-import express from "express";
+import express, { RequestHandler } from "express";
 import http from "http";
 import cors from "cors";
 import { WebSocketServer } from "ws";
@@ -91,14 +87,13 @@ const resolvers = {
   },
 };
 
-const RESOURCE_NAMES_WITH_REFRESH_TOKEN = ["login", "refreshSession"];
+const REFRESH_TOKEN_HEADER = "X-Refresh-Token";
+const RESOURCES_WITH_REFRESH_TOKEN = ["login", "refreshSession"];
 
 const refreshTokenPlugin: ApolloServerPlugin = {
   async requestDidStart() {
     return {
-      async willSendResponse(
-        context: GraphQLRequestContextWillSendResponse<any>
-      ) {
+      async willSendResponse(context) {
         const { response } = context;
 
         const result =
@@ -107,7 +102,7 @@ const refreshTokenPlugin: ApolloServerPlugin = {
         const matchedResourceName =
           result &&
           result.data &&
-          RESOURCE_NAMES_WITH_REFRESH_TOKEN.find(
+          RESOURCES_WITH_REFRESH_TOKEN.find(
             (resourceName) => resourceName in (result.data ?? {})
           );
 
@@ -120,12 +115,13 @@ const refreshTokenPlugin: ApolloServerPlugin = {
           const refreshToken = (result.data[matchedResourceName] as any)
             .refreshToken;
           // Set refresh token in the headers
-          response.http?.headers.set("X-Refresh-Token", refreshToken);
+          response.http?.headers.set(REFRESH_TOKEN_HEADER, refreshToken);
         }
       },
     };
   },
 };
+
 // Create executable schema
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -170,16 +166,34 @@ const server = new ApolloServer({
     ApolloServerPluginDrainHttpServer({ httpServer }),
     refreshTokenPlugin,
   ],
+  status400ForVariableCoercionErrors: true,
 });
 
 // Start the server
 await server.start();
+
+const REFRESH_TOKEN_COOKIE = "refreshToken";
+const parseRefreshTokenCookieMiddleware: RequestHandler = (req, _, next) => {
+  if ("refreshToken" in (req.body?.variables ?? {})) {
+    const cookies = req.headers.cookie?.split(";") ?? [];
+    for (const cookie of cookies) {
+      const [name, value] = cookie?.split("=");
+      if (name === REFRESH_TOKEN_COOKIE) {
+        req.body.variables.refreshToken = value;
+        next();
+        return;
+      }
+    }
+  }
+  next();
+};
 
 // Apply Apollo Server middleware
 app.use(
   "/graphql",
   cors<cors.CorsRequest>(),
   express.json(),
+  parseRefreshTokenCookieMiddleware,
   expressMiddleware(server)
 );
 
