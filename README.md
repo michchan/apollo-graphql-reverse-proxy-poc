@@ -28,14 +28,49 @@ This Proof-of-Concept (POC) implements a reverse proxy setup using either Nginx 
    cd poc-reverse-proxy-unified
    ```
 
-2. **Set Node.js Version (Optional for Local Development)**
+2. **Set Up Environment File**
+   Copy the example environment file to create `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Build and Run**
+   ```bash
+   export $(grep -v '^#' .env | xargs) && docker-compose --profile $REVERSE_PROXY_TYPE up --build
+   ```
+
+4. **Access the App**
+   - Open `http://localhost` in your browser.
+   - Use username "user" and password "pass" for login.
+
+5. **Test**
+   - **Query**: Displays "Hello from GraphQL!" on load.
+   - **Mutation (Login)**: Sets the `refreshToken` http-only cookie by server.
+   - **Mutation (Refresh)**: Uses the cookie’s token in the request header to get a new access token.
+   - **Subscription**: Notify on any user has logged in.
+
+## Switching Proxies
+
+Edit `.env` to set the desired proxy (default is `nginx`):
+```bash
+# Example .env
+REVERSE_PROXY_TYPE=nginx
+# OR
+REVERSE_PROXY_TYPE=kong
+```
+
+## Local Development (Optional)
+
+To run the server or client locally without Docker:
+
+1. **Set Node.js Version (Optional for Local Development)**
    If using NVM:
    ```bash
    nvm install
    nvm use
    ```
 
-3. **Verify Yarn v4 (Optional for Local Development)**
+2. **Verify Yarn v4 (Optional for Local Development)**
    The repository includes `.yarn/releases/yarn-4.5.1.cjs` for Yarn 4.5.1. To verify:
    ```bash
    cd server
@@ -79,58 +114,15 @@ This Proof-of-Concept (POC) implements a reverse proxy setup using either Nginx 
      rm -rf temp-yarn
      ```
 
-4. **Set Up Environment File**
-   Copy the example environment file to create `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` to set the desired proxy (default is `nginx`):
-   ```bash
-   # Example .env
-   REVERSE_PROXY_TYPE=nginx
-   # OR
-   REVERSE_PROXY_TYPE=kong
-   ```
-
-5. **Build and Run**
-   ```bash
-   export $(grep -v '^#' .env | xargs) && docker-compose --profile $REVERSE_PROXY_TYPE up --build
-   ```
-
-6. **Access the App**
-   - Open `http://localhost` in your browser.
-   - Use username "user" and password "pass" for login.
-
-7. **Test**
-   - **Query**: Displays "Hello from GraphQL!" on load.
-   - **Mutation (Login)**: Sets the `refreshToken` cookie.
-   - **Mutation (Refresh)**: Uses the cookie’s token in the request body to get a new access token.
-   - **Subscription**: Notification update every 5 seconds.
-
-## Switching Proxies
-
-- To use Nginx:
-  ```bash
-  export REVERSE_PROXY_TYPE=nginx
-  docker-compose --profile nginx up --build
-  ```
-- To use Kong:
-  ```bash
-  export REVERSE_PROXY_TYPE=kong
-  docker-compose --profile kong up --build
-  ```
-
-## Local Development (Optional)
-
-To run the server or client locally without Docker:
-1. **Server**:
+3. **Server**:
    ```bash
    cd server
    yarn install
    yarn build
    yarn start
    ```
-2. **Client**:
+
+4. **Client**:
    ```bash
    cd client
    yarn install
