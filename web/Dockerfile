@@ -25,7 +25,7 @@ COPY nginx/nginx.conf.template /etc/nginx/templates/nginx.conf.template
 COPY nginx/scripts.js /etc/nginx/njs/scripts.js
 
 # Command to substitute environment variables and start Nginx
-CMD sh -c "envsubst '\$ALLOWED_ORIGIN \$ALLOWED_HEADERS \$SERVER_NAME' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && nginx -v && nginx -g 'daemon off;'"
+CMD sh -c "envsubst '\$ALLOWED_ORIGIN \$ALLOWED_HEADERS \$SERVER_NAME \$GRAPHQL_API_KEY' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && nginx -v && nginx -g 'daemon off;'"
 
 # Build Kong reverse proxy
 FROM kong:3.0.0 AS kong-builder

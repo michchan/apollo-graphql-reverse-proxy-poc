@@ -8,6 +8,14 @@ import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { PubSub } from "graphql-subscriptions";
+import dotenv from "dotenv";
+
+dotenv.config({ path: "../.env" });
+
+const API_KEY = process.env.GRAPHQL_API_KEY;
+const API_KEY_HEADER = "X-API-Key";
+const REFRESH_TOKEN_HEADER = "X-Refresh-Token";
+const RESOURCES_WITH_REFRESH_TOKEN = ["login", "refreshSession"];
 
 // Define interfaces for resolver arguments
 interface LoginArgs {
@@ -86,9 +94,6 @@ const resolvers = {
     },
   },
 };
-
-const REFRESH_TOKEN_HEADER = "X-Refresh-Token";
-const RESOURCES_WITH_REFRESH_TOKEN = ["login", "refreshSession"];
 
 const refreshTokenPlugin: ApolloServerPlugin = {
   async requestDidStart() {
@@ -172,6 +177,15 @@ const server = new ApolloServer({
 // Start the server
 await server.start();
 
+const apiKeyAuthMiddleware: RequestHandler = (req, res, next) => {
+  const apiKey = req.headers[API_KEY_HEADER.toLocaleLowerCase()];
+  if (apiKey !== API_KEY) {
+    res.status(403).send("API Key missing or invalid.");
+    return;
+  }
+  next();
+};
+
 const parseRefreshTokenMiddleware: RequestHandler = (req, _, next) => {
   if ("refreshToken" in (req.body?.variables ?? {})) {
     const refreshToken = req.headers[REFRESH_TOKEN_HEADER.toLowerCase()];
@@ -185,6 +199,7 @@ app.use(
   "/graphql",
   cors<cors.CorsRequest>(),
   express.json(),
+  apiKeyAuthMiddleware,
   parseRefreshTokenMiddleware,
   expressMiddleware(server)
 );

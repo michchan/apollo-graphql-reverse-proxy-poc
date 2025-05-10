@@ -687,6 +687,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv@npm:16.5.0":
+  version: 16.5.0
+  resolution: "dotenv@npm:16.5.0"
+  checksum: 10c0/5bc94c919fbd955bf0ba44d33922a1e93d1078e64a1db5c30faeded1d996e7a83c55332cb8ea4fae5a9ca4d0be44cbceb95c5811e70f9f095298df09d1997dd9
+  languageName: node
+  linkType: hard
+
 "dset@npm:^3.1.4":
   version: 3.1.4
   resolution: "dset@npm:3.1.4"
@@ -897,26 +904,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "graphql@workspace:."
-  dependencies:
-    "@apollo/server": "npm:^4.10.0"
-    "@graphql-tools/schema": "npm:^10.0.0"
-    "@types/cors": "npm:^2.8.17"
-    "@types/express": "npm:^4.17.21"
-    "@types/node": "npm:^20.11.0"
-    "@types/ws": "npm:^8.5.10"
-    cors: "npm:^2.8.5"
-    express: "npm:^4.18.2"
-    graphql: "npm:^16.11.0"
-    graphql-subscriptions: "npm:^2.0.0"
-    graphql-ws: "npm:^5.14.0"
-    typescript: "npm:^5.3.3"
-    ws: "npm:^8.14.2"
-  languageName: unknown
-  linkType: soft
-
 "graphql-subscriptions@npm:^2.0.0":
   version: 2.0.0
   resolution: "graphql-subscriptions@npm:2.0.0"
@@ -943,6 +930,27 @@ __metadata:
   checksum: 10c0/124da7860a2292e9acf2fed0c71fc0f6a9b9ca865d390d112bdd563c1f474357141501c12891f4164fe984315764736ad67f705219c62f7580681d431a85db88
   languageName: node
   linkType: hard
+
+"graphql@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "graphql@workspace:."
+  dependencies:
+    "@apollo/server": "npm:^4.10.0"
+    "@graphql-tools/schema": "npm:^10.0.0"
+    "@types/cors": "npm:^2.8.17"
+    "@types/express": "npm:^4.17.21"
+    "@types/node": "npm:^20.11.0"
+    "@types/ws": "npm:^8.5.10"
+    cors: "npm:^2.8.5"
+    dotenv: "npm:16.5.0"
+    express: "npm:^4.18.2"
+    graphql: "npm:^16.11.0"
+    graphql-subscriptions: "npm:^2.0.0"
+    graphql-ws: "npm:^5.14.0"
+    typescript: "npm:^5.3.3"
+    ws: "npm:^8.14.2"
+  languageName: unknown
+  linkType: soft
 
 "has-symbols@npm:^1.0.3, has-symbols@npm:^1.1.0":
   version: 1.1.0

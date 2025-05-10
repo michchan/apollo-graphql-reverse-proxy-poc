@@ -8,7 +8,11 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - REVERSE_PROXY_TYPE=${REVERSE_PROXY_TYPE:-nginx}
+      REVERSE_PROXY_TYPE: ${REVERSE_PROXY_TYPE:-nginx}
+      API_KEY: ${GRAPHQL_API_KEY}
+    env_file:
+      - path: .env # Change this to .env.dev or .env.prod as needed
+        required: true
 
   web:
     build:
@@ -27,6 +31,7 @@ services:
       SERVER_NAME: ${SERVER_NAME}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN}
       ALLOWED_HEADERS: ${ALLOWED_HEADERS}
+      GRAPHQL_API_KEY: ${GRAPHQL_API_KEY}
     env_file:
       - path: .env # Change this to .env.dev or .env.prod as needed
         required: true
