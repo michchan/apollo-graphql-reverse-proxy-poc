@@ -172,18 +172,10 @@ const server = new ApolloServer({
 // Start the server
 await server.start();
 
-const REFRESH_TOKEN_COOKIE = "refreshToken";
-const parseRefreshTokenCookieMiddleware: RequestHandler = (req, _, next) => {
+const parseRefreshTokenMiddleware: RequestHandler = (req, _, next) => {
   if ("refreshToken" in (req.body?.variables ?? {})) {
-    const cookies = req.headers.cookie?.split(";") ?? [];
-    for (const cookie of cookies) {
-      const [name, value] = cookie?.split("=");
-      if (name === REFRESH_TOKEN_COOKIE) {
-        req.body.variables.refreshToken = value;
-        next();
-        return;
-      }
-    }
+    const refreshToken = req.headers[REFRESH_TOKEN_HEADER.toLowerCase()];
+    req.body.variables.refreshToken = refreshToken;
   }
   next();
 };
@@ -193,7 +185,7 @@ app.use(
   "/graphql",
   cors<cors.CorsRequest>(),
   express.json(),
-  parseRefreshTokenCookieMiddleware,
+  parseRefreshTokenMiddleware,
   expressMiddleware(server)
 );
 

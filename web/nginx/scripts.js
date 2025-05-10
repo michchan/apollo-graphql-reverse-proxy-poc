@@ -3,6 +3,8 @@ const REFRESH_TOKEN_COOKIE = "refreshToken";
 const RESOURCES_WITH_REFRESH_TOKEN = ["login", "refreshSession"];
 
 function extractRefreshTokenInRequestHeader(r) {
+  if (r.uri !== "/graphql") return "";
+
   const cookieHeader = r.headersIn["Cookie"];
   if (!cookieHeader) {
     return "";
