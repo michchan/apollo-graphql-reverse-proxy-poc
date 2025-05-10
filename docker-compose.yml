@@ -22,6 +22,14 @@ services:
     profiles:
       - nginx
       - kong
+    environment:
+      # Pass environment variables from the .env file
+      SERVER_NAME: ${SERVER_NAME}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN}
+      ALLOWED_HEADERS: ${ALLOWED_HEADERS}
+    env_file:
+      - path: .env # Change this to .env.dev or .env.prod as needed
+        required: true
 
 volumes:
   kong_data:
