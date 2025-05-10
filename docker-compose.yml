@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   graphql:
     build:
@@ -28,6 +26,7 @@ services:
       - kong
     environment:
       # Pass environment variables from the .env file
+      REVERSE_PROXY_TYPE: ${REVERSE_PROXY_TYPE:-nginx}
       SERVER_NAME: ${SERVER_NAME}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN}
       ALLOWED_HEADERS: ${ALLOWED_HEADERS}

@@ -1,22 +1,70 @@
 _format_version: "3.0"
+
 services:
+  # Service for GraphQL backend
   - name: graphql-service
     url: http://graphql:4000/graphql
     routes:
       - name: graphql-route
         paths:
-          - /graphql
+          - "/graphql"
+        methods:
+          - GET
+          - POST
+        strip_path: false
         plugins:
-          - name: refresh-token-plugin
+          # CORS Plugin
+          - name: cors
+            config:
+              origins:
+                - "${ALLOWED_ORIGIN}"
+              methods:
+                - GET
+                - POST
+              headers:
+                - "${ALLOWED_HEADERS}"
+              credentials: true
+              preflight_continue: true
+
+          # Pre-function for Same-Origin Check
+          - name: pre-function
+            config:
+              access:
+                - |
+                  local origin = ngx.var.http_origin
+                  local allowed_origin = "${ALLOWED_ORIGIN}"
+                  if origin ~= allowed_origin then
+                    ngx.status = 403
+                    ngx.say("Forbidden: Same-origin policy violation")
+                    return ngx.exit(403)
+                  end
+
+          # Request Transformer for Headers
+          - name: request-transformer
+            config:
+              add:
+                headers:
+                  - "X-API-Key:${GRAPHQL_API_KEY}"
+                  - "X-Refresh-Token:%{cookie.refreshToken}"
+
+          # Response Transformer for Headers
+          - name: response-transformer
+            config:
+              add:
+                headers:
+                  - "Set-Cookie:refreshToken=%{upstream_x_refresh_token}; HttpOnly; SameSite=Strict"
+              remove:
+                headers:
+                  - "X-Refresh-Token"
+
+  # Service for React SPA (served by embedded Nginx)
   - name: spa-service
-    url: http://client:80
+    url: http://localhost
     routes:
       - name: spa-route
         paths:
-          - /
-plugins:
-  - name: refresh-token-plugin
-    config:
-      set_cookie_header: X-Set-Refresh-Token
-      extract_cookie_name: refreshToken
-      mutation_name: refreshToken
+          - "/"
+        strip_path: false
+
+consumers: []
+plugins: []

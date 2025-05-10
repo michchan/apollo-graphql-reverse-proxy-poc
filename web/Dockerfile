@@ -1,4 +1,4 @@
-# Build web app
+# # ============ Build web app ============ 
 FROM node:22.14-alpine AS web-builder
 
 WORKDIR /app
@@ -11,7 +11,7 @@ RUN yarn install --immutable
 COPY . .
 RUN yarn build
 
-# Build Nginx reverse proxy
+# ============ Build Nginx reverse proxy # ============ 
 FROM nginx:1.28.0-alpine AS nginx-builder
 
 # Install gettext for envsubst
@@ -24,13 +24,31 @@ COPY --from=web-builder /app/dist /usr/share/nginx/html
 COPY nginx/nginx.conf.template /etc/nginx/templates/nginx.conf.template
 COPY nginx/scripts.js /etc/nginx/njs/scripts.js
 
-# Command to substitute environment variables and start Nginx
-CMD sh -c "envsubst '\$ALLOWED_ORIGIN \$ALLOWED_HEADERS \$SERVER_NAME \$GRAPHQL_API_KEY' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && nginx -v && nginx -g 'daemon off;'"
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Build Kong reverse proxy
-FROM kong:3.0.0 AS kong-builder
+CMD ["/entrypoint.sh"]
+
+# ============ Build Kong reverse proxy ============ 
+FROM kong:3.9.0 AS kong-builder
 
 COPY --from=web-builder /app/dist /usr/share/nginx/html
 COPY kong/kong.yml /usr/local/kong/declarative/kong.yml
+COPY kong/nginx.conf /etc/kong/nginx.conf
 
-CMD ["kong", "docker-start"]
+# Switch to root user to modify permissions
+USER root
+
+# Copy entrypoint script and set correct permissions
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENV KONG_DATABASE=off
+ENV KONG_DECLARATIVE_CONFIG=/usr/local/kong/declarative/kong.yml
+ENV KONG_NGINX_HTTP_INCLUDE=/etc/kong/nginx.conf
+ENV KONG_PROXY_LISTEN="0.0.0.0:80 reuseport backlog=16384"
+# Adjust admin port to avoid conflict
+ENV KONG_ADMIN_LISTEN="0.0.0.0:8001 reuseport backlog=16384" 
+
+CMD ["/entrypoint.sh"]
