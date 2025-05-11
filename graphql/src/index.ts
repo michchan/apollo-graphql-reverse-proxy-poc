@@ -138,6 +138,15 @@ const httpServer = http.createServer(app);
 const wsServer = new WebSocketServer({
   server: httpServer,
   path: "/graphql",
+  verifyClient: (info, callback) => {
+    const result = verifyAPIKeyHeader(info.req.headers);
+    if (!result.isValid) {
+      callback(false, result.code, result.message);
+      return;
+    }
+    // Accept the connection
+    callback(true);
+  },
 });
 
 // Use WebSocket server with GraphQL schema
@@ -177,10 +186,22 @@ const server = new ApolloServer({
 // Start the server
 await server.start();
 
+const verifyAPIKeyHeader = (
+  headers: http.IncomingHttpHeaders
+): {
+  isValid: boolean;
+  code: number;
+  message: string;
+} => {
+  const apiKey = headers[API_KEY_HEADER.toLocaleLowerCase()];
+  const isValid = apiKey === API_KEY;
+  return { isValid, code: 403, message: "API Key missing or invalid" };
+};
+
 const apiKeyAuthMiddleware: RequestHandler = (req, res, next) => {
-  const apiKey = req.headers[API_KEY_HEADER.toLocaleLowerCase()];
-  if (apiKey !== API_KEY) {
-    res.status(403).send("API Key missing or invalid.");
+  const result = verifyAPIKeyHeader(req.headers);
+  if (!result.isValid) {
+    res.status(result.code).send(result.message);
     return;
   }
   next();

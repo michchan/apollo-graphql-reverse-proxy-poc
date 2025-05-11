@@ -46,6 +46,8 @@ function setRefreshTokenInResponseHeader(r) {
 }
 
 function stripRefreshTokenInResponseBody(r, data, flags) {
+  if (r.status >= 400) return;
+
   try {
     let responseBody = data.trim() ? JSON.parse(data) : {};
     let modifiedBody = responseBody;
