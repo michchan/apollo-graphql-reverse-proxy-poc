@@ -13,7 +13,6 @@ http {
 
     js_path "/etc/nginx/njs/";
     js_import scripts from scripts.js;
-    js_set $refresh_token scripts.extractRefreshTokenInRequestHeader;
 
     server {
         listen 80;
@@ -32,12 +31,12 @@ http {
         location /graphql {
             # Only allow requests with the same origin
             if ($http_origin != "${ALLOWED_ORIGIN}") {
-                return 403; # Forbidden
+                return 403;
             }
 
             # Allow only GET and POST methods
             if ($request_method !~ ^(GET|POST)$) {
-                return 405; # Method Not Allowed
+                return 405; 
             }
 
             # Set CORS headers for valid requests
@@ -50,7 +49,7 @@ http {
             if ($request_method = OPTIONS) {
                 add_header 'Content-Length' 0;
                 add_header 'Content-Type' 'text/plain charset=UTF-8';
-                return 204; # No Content
+                return 204;
             }
 
             # Proxy to the upstream server
@@ -67,9 +66,11 @@ http {
             # Set API key header
             proxy_set_header X-API-Key ${GRAPHQL_API_KEY};
             # Add the refresh token header
-            proxy_set_header X-Refresh-Token $refresh_token;
+            proxy_set_header X-Refresh-Token $cookie_refresh_token;
 
-            js_header_filter scripts.setRefreshTokenInResponseHeader;
+            # Set refresh token cookie in response
+            # Add "Secure" for HTTPs
+            add_header Set-Cookie "refresh_token=$upstream_http_x_refresh_token; SameSite=Strict; HttpOnly";
 
             if ($http_upgrade != "websocket") {
                 js_body_filter scripts.stripRefreshTokenInResponseBody;
