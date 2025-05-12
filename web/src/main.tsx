@@ -15,13 +15,13 @@ import { getMainDefinition } from "@apollo/client/utilities";
 const IS_DEV = import.meta.env.DEV;
 
 const httpLink = new HttpLink({
-  // This is setup for sitting behind a reverse proxy (Nginx/Kong) with the same domain. Use absolute URL for local development.
+  // This is setup for sitting behind a reverse proxy (Nginx) with the same domain. Use absolute URL for local development.
   uri: IS_DEV ? "http://localhost:4000/graphql" : "/graphql",
 });
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    // This is setup for sitting behind a reverse proxy (Nginx/Kong) with the same domain. Use absolute URL for local development.
+    // This is setup for sitting behind a reverse proxy (Nginx) with the same domain. Use absolute URL for local development.
     url: IS_DEV ? "ws://localhost:4000/graphql" : "/graphql",
     retryAttempts: 5,
     shouldRetry: () => true,

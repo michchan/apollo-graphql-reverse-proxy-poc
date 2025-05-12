@@ -1,17 +1,16 @@
-# Unified POC: Nginx or Kong Reverse Proxy with Yarn v4 and Node 22.14
+# POC: Nginx Reverse Proxy in front of Apollo GraphQL express server with Yarn v4 and Node 22.14
 
-This Proof-of-Concept (POC) implements a reverse proxy setup using either Nginx or Kong, switchable via the `REVERSE_PROXY_TYPE` environment variable. It uses Yarn v4 (Berry) 4.5.1 for package management, Node.js 22.14, and includes a `.nvmrc` file. Both proxies inject the `refreshToken` cookie into the request body for the `refreshToken` GraphQL mutation, supporting queries, mutations, subscriptions, and cookie handling (`HttpOnly`, `Secure`, `SameSite=Strict`).
+This Proof-of-Concept (POC) implements a reverse proxy setup using Nginx. It uses Yarn v4 (Berry) 4.5.1 for package management, Node.js 22.14, and includes a `.nvmrc` file. Both proxies inject the `refreshToken` cookie into the request body for the `refreshToken` GraphQL mutation, supporting queries, mutations, subscriptions, and cookie handling (`HttpOnly`, `Secure`, `SameSite=Strict`).
 
 ## Requirements Met
 
-1. **Testable Locally**: Runs via Docker Compose on `localhost:80` (Nginx/Kong) and `localhost:4000` (GraphQL server).
+1. **Testable Locally**: Runs via Docker Compose on `localhost:80` (Nginx) and `localhost:4000` (GraphQL server).
 2. **Same Domain for SPA and Proxy**: SPA and proxy served at `localhost:80`, GraphQL server on `localhost:4000`.
 3. **`/graphql` Endpoint**: Used for all GraphQL requests and subscriptions.
 4. **Refresh Token in Cookie**: `login` mutation sets an `HttpOnly`, `Secure`, `SameSite=Strict` cookie via `X-Set-Refresh-Token` header.
 5. **Refresh Token in Request Body**: Both proxies inject the cookie’s `refreshToken` into the `refreshToken` mutation’s variables.
-6. **Switchable Proxies**: Use `REVERSE_PROXY_TYPE=nginx` or `kong` to select the proxy.
-7. **Yarn v4**: Uses Yarn 4.5.1, managed via committed `.yarn/releases/yarn-4.5.1.cjs` files in `server` and `client`.
-8. **Node 22.14**: Uses `node:22.14-alpine` for building and running, specified in `.nvmrc`.
+6. **Yarn v4**: Uses Yarn 4.5.1, managed via committed `.yarn/releases/yarn-4.5.1.cjs` files in `server` and `client`.
+7. **Node 22.14**: Uses `node:22.14-alpine` for building and running, specified in `.nvmrc`.
 
 ## Prerequisites
 
@@ -36,7 +35,7 @@ This Proof-of-Concept (POC) implements a reverse proxy setup using either Nginx 
 
 3. **Build and Run**
    ```bash
-   export $(grep -v '^#' .env | xargs) && docker-compose --profile $REVERSE_PROXY_TYPE up --build
+   docker compose up --build
    ```
 
 4. **Access the App**
@@ -48,16 +47,6 @@ This Proof-of-Concept (POC) implements a reverse proxy setup using either Nginx 
    - **Mutation (Login)**: Sets the `refreshToken` http-only cookie by server.
    - **Mutation (Refresh)**: Uses the cookie’s token in the request header to get a new access token.
    - **Subscription**: Notify on any user has logged in.
-
-## Switching Proxies
-
-Edit `.env` to set the desired proxy (default is `nginx`):
-```bash
-# Example .env
-REVERSE_PROXY_TYPE=nginx
-# OR
-REVERSE_PROXY_TYPE=kong
-```
 
 ## Local Development (Optional)
 
@@ -167,29 +156,8 @@ To regenerate `.yarn/releases/yarn-4.5.1.cjs` if needed:
   rm -rf temp-yarn
   ```
 
-## Comparison: Nginx vs. Kong
-
-- **Configuration**:
-  - **Nginx**: Static `nginx.conf` with `njs` scripts. Simpler for small setups but less dynamic.
-  - **Kong**: Declarative `kong.yml` with Lua plugins. More complex but API-driven and scalable.
-- **Refresh Token in Request Body**:
-  - **Nginx**: Uses `njs` to parse `r.requestText` and set `r.requestBody`. Limited by `njs` body handling.
-  - **Kong**: Lua’s `kong.request.get_body` and `kong.service.request.set_raw_body` are robust for JSON manipulation.
-- **WebSocket Handling**:
-  - **Nginx**: Explicit `proxy_set_header` directives for WebSocket proxying.
-  - **Kong**: Implicit WebSocket support via service/route model.
-- **Extensibility**:
-  - **Nginx**: Limited to `njs` or external modules, less suited for API management.
-  - **Kong**: Built for API gateways, supports plugins, rate-limiting, and observability.
-- **Performance**:
-  - **Nginx**: Lighter, ideal for simple reverse proxy tasks.
-  - **Kong**: Heavier due to API gateway features but more feature-rich.
-
 ## Notes
 
 - **Yarn v4**: Uses Yarn 4.5.1, managed via committed `.yarn/releases/yarn-4.5.1.cjs` files. The `node-modules` linker ensures Docker compatibility.
 - **Secure Cookie**: The `Secure` attribute requires HTTPS in production; not enforced locally.
 - **Mutation Naming**: Proxies assume the `refreshToken` mutation is named exactly `refreshToken`. Aliases may require query parsing adjustments.
-- **Nginx Limitations**: `njs` body parsing is less robust than Kong’s Lua; Kong is preferred for complex body manipulations.
-
-Choose Nginx for lightweight, straightforward setups; choose Kong for dynamic, scalable API gateway features.

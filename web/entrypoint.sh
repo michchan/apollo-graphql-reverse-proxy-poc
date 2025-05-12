@@ -21,13 +21,6 @@ done
 envsubst_pattern=$(echo "$envsubst_pattern" | sed 's/^ //') # Remove leading space
 
 # Substitute variables based on reverse proxy type
-if [ "$REVERSE_PROXY_TYPE" = "nginx" ]; then
-  envsubst "$envsubst_pattern" < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
-  nginx -v
-  nginx -g 'daemon off;'
-fi
-
-# Run Kong
-if [ "$REVERSE_PROXY_TYPE" = "kong" ]; then
-  exec kong start --vv
-fi
+envsubst "$envsubst_pattern" < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
+nginx -v
+nginx -g 'daemon off;'

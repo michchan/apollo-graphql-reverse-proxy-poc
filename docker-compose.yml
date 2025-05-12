@@ -6,7 +6,6 @@ services:
     ports:
       - "4000:4000"
     environment:
-      REVERSE_PROXY_TYPE: ${REVERSE_PROXY_TYPE:-nginx}
       API_KEY: ${GRAPHQL_API_KEY}
     env_file:
       - path: .env # Change this to .env.dev or .env.prod as needed
@@ -16,17 +15,11 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
-      target: ${REVERSE_PROXY_TYPE:-nginx}-builder
     ports:
       - "80:80"
     depends_on:
       - graphql
-    profiles:
-      - nginx
-      - kong
     environment:
-      # Pass environment variables from the .env file
-      REVERSE_PROXY_TYPE: ${REVERSE_PROXY_TYPE:-nginx}
       SERVER_NAME: ${SERVER_NAME}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN}
       ALLOWED_HEADERS: ${ALLOWED_HEADERS}
@@ -34,6 +27,3 @@ services:
     env_file:
       - path: .env # Change this to .env.dev or .env.prod as needed
         required: true
-
-volumes:
-  kong_data:
