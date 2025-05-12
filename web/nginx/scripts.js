@@ -1,7 +1,10 @@
 const RESOURCES_WITH_REFRESH_TOKEN = ["login", "refreshSession"];
 
 function stripRefreshTokenInResponseBody(r, data, flags) {
-  if (r.status >= 400) return;
+  if (r.status >= 400) {
+    r.sendBuffer(data, flags);
+    return;
+  }
 
   try {
     let responseBody = data.trim() ? JSON.parse(data) : {};
