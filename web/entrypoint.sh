@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Required environment variables (from ENV)
-required_vars="ALLOWED_ORIGIN ALLOWED_HEADERS SERVER_NAME GRAPHQL_API_KEY"
+required_vars="ALLOWED_HOSTS ALLOWED_ORIGIN ALLOWED_HEADERS SERVER_NAME GRAPHQL_API_KEY"
 
 # Check if all required variables are set
 for var in $required_vars; do

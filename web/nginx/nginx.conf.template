@@ -1,5 +1,8 @@
+
 # This is a template that will be pre-processed by `envsubst` command to inject environment variables into templates like ${...}.
 # Eventually this will be served as a nginx.conf file.
+
+# Reference: https://www.cyberciti.biz/tips/linux-unix-bsd-nginx-webserver-security.html
 
 load_module modules/ngx_http_js_module.so;
 
@@ -14,6 +17,10 @@ http {
     js_path "/etc/nginx/njs/";
     js_import scripts from scripts.js;
 
+    ### Directive describes the zone, in which the session states are stored i.e. store in slimits. ###
+    ### 1m can handle 32000 sessions with 32 bytes/session, set to 5m x 32000 session ###
+    limit_conn_zone $binary_remote_addr zone=addr:5m;
+
     server {
         listen 80;
         server_name ${SERVER_NAME};
@@ -21,6 +28,44 @@ http {
         # Enable detailed logging to a mounted volume
         error_log /var/log/nginx/error.log debug;
         access_log /var/log/nginx/access.log;
+
+        ## Start: Size Limits & Buffer Overflows ##
+        client_body_buffer_size  1K;
+        client_header_buffer_size 1k;
+        client_max_body_size 1k;
+        large_client_header_buffers 2 1k;
+        ## END: Size Limits & Buffer Overflows ##
+
+        ## Start: Timeouts ##
+        client_body_timeout   10;
+        client_header_timeout 10;
+        keepalive_timeout     5 5;
+        send_timeout          10;
+        ## End: Timeouts ##
+
+        # Only allow requests with allowed hosts
+        if ($host !~ ^(${ALLOWED_HOSTS})$ ) {
+            return 403;
+        }
+        ## Block download agents ##
+        if ($http_user_agent ~* LWP::Simple|BBBike|wget) {
+            return 403;
+        }
+        ## Block some robots ##
+        if ($http_user_agent ~* msnbot|scrapbot) {
+            return 403;
+        }
+        ## Deny certain Referers ###
+        if ($http_referer ~* (babes|forsale|girl|jewelry|love|nudit|organic|poker|porn|sex|teen)) {
+            return 403;
+        }
+
+        #22 : Avoid clickjacking
+        add_header X-Frame-Options SAMEORIGIN;
+        #23 : Disable content-type sniffing on some browsers
+        add_header X-Content-Type-Options nosniff;
+        #23 : Enable the Cross-site scripting (XSS) filter
+        add_header X-XSS-Protection "1; mode=block";
 
         location / {
             root /usr/share/nginx/html;
@@ -33,7 +78,6 @@ http {
             if ($http_origin != "${ALLOWED_ORIGIN}") {
                 return 403;
             }
-
             # Allow only GET and POST methods
             if ($request_method !~ ^(GET|POST)$) {
                 return 405; 

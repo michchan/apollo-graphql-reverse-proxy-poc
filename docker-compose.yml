@@ -21,6 +21,7 @@ services:
       - graphql
     environment:
       SERVER_NAME: ${SERVER_NAME}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN}
       ALLOWED_HEADERS: ${ALLOWED_HEADERS}
       GRAPHQL_API_KEY: ${GRAPHQL_API_KEY}
