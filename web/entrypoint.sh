@@ -23,4 +23,5 @@ envsubst_pattern=$(echo "$envsubst_pattern" | sed 's/^ //') # Remove leading spa
 # Substitute variables based on reverse proxy type
 envsubst "$envsubst_pattern" < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
 nginx -v
+nginx -t
 nginx -g 'daemon off;'
